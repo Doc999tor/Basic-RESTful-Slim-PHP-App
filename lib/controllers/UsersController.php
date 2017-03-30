@@ -51,7 +51,11 @@ class UsersController {
     public function patch(Request $request, Response $response, $args) {
         $id = (int)filter_var($args['id'], FILTER_SANITIZE_NUMBER_INT);
         $body = $request->getParsedBody();
-        $this->patchUser($id, $body['name'], $body['birthdate']);
+        $body = call_user_func_array('array_merge', array_map(function ($key, $value) {
+            return [filter_var($key, FILTER_SANITIZE_STRING) => filter_var($value, FILTER_SANITIZE_STRING)];
+        }, array_keys($body), $body));
+
+        $this->patchUser($id, $body);
         return $response->withStatus(200);
     }
     public function delete(Request $request, Response $response, $args) {
@@ -88,7 +92,7 @@ class UsersController {
         }
     }
     private function putUser (int $id, string $name, string $birthdate) {
-        $stmt = $this->db->prepare("update users set name = :name, birthdate = :birthdate where id = :id");
+        $stmt = $this->db->prepare("UPDATE users SET name = :name, birthdate = :birthdate WHERE id = :id");
         $stmt->bindParam(':id', $id, \PDO::PARAM_STR);
         $stmt->bindParam(':name', $name, \PDO::PARAM_STR);
         $stmt->bindParam(':birthdate', $birthdate, \PDO::PARAM_STR);
@@ -99,12 +103,24 @@ class UsersController {
         }
         return true;
     }
-    private function patchUser () {
-        $stmt = $this->db->prepare("SELECT name, birthdate FROM users LIMIT 1000");
-        if ($stmt->execute()) {
-            $result = $stmt->fetchAll();
-        } else { var_dump($this->db->errorInfo()); }
-        return $result;
+    private function patchUser (int $id, array $data) {
+        $set_string = implode(', ', array_map(function ($key) {
+            return "{$key} = :{$key}";
+        }, array_keys($data)));
+
+        $stmt = $this->db->prepare("UPDATE users SET {$set_string} WHERE id = :id");
+        foreach ($data as $key => $value) {
+            $stmt->bindValue(":{$key}", $value, \PDO::PARAM_STR);
+        }
+        $stmt->bindValue(':id', $id, \PDO::PARAM_STR);
+
+        try {
+            $stmt->execute();
+            return true;
+        } catch (PDOException $e) {
+            var_dump($this->db->errorInfo());
+            return false;
+        }
     }
     private function deleteUser () {
         $stmt = $this->db->prepare("SELECT name, birthdate FROM users LIMIT 1000");
