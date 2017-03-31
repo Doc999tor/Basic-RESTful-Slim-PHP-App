@@ -22,13 +22,14 @@ class UsersController {
         $path = 'users';
         $users = $this->getUsers();
 
+        $response = $response->withHeader('X-Robots-Tag', 'noindex, nofollow');
         return $this->view->render($response, $path . '.html', [
             'path' => $path,
             'users' => $users,
         ]);
     }
     public function get(Request $request, Response $response): Response {
-        $response = $response->withHeader('Access-Control-Allow-Origin', '*');
+        $response = $response->withHeader('Access-Control-Allow-Origin', '*')->withHeader('X-Robots-Tag', 'noindex, nofollow');
         return $response->withJson($this->getUsers());
     }
     public function post(Request $request, Response $response): Response {
