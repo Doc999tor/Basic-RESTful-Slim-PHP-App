@@ -28,6 +28,7 @@ class UsersController {
         ]);
     }
     public function get(Request $request, Response $response): Response {
+        $response = $response->withHeader('Access-Control-Allow-Origin', '*');
         return $response->withJson($this->getUsers());
     }
     public function post(Request $request, Response $response): Response {
