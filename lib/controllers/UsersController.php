@@ -15,10 +15,10 @@ class UsersController {
         $this->view = $container->get('view');
         $this->db = $container->get('db');
     }
-    public function home(Request $request, Response $response) {
+    public function home(Request $request, Response $response): Response {
         return $response->withRedirect('/users');
     }
-    public function showUsers(Request $request, Response $response) {
+    public function showUsers(Request $request, Response $response): Response {
         $path = 'users';
         $users = $this->getUsers();
 
@@ -27,10 +27,10 @@ class UsersController {
             'users' => $users,
         ]);
     }
-    public function get(Request $request, Response $response) {
+    public function get(Request $request, Response $response): Response {
         return $response->withJson($this->getUsers());
     }
-    public function post(Request $request, Response $response) {
+    public function post(Request $request, Response $response): Response {
         $path = 'users';
         $body = $request->getParsedBody();
 
@@ -42,13 +42,13 @@ class UsersController {
             return $response;
         }
     }
-    public function put(Request $request, Response $response, $args) {
+    public function put(Request $request, Response $response, $args): Response {
         $id = (int)filter_var($args['id'], FILTER_SANITIZE_NUMBER_INT);
         $body = $request->getParsedBody();
         $this->putUser($id, $body['name'], $body['birthdate']);
         return $response->withStatus(200);
     }
-    public function patch(Request $request, Response $response, $args) {
+    public function patch(Request $request, Response $response, $args): Response {
         $id = (int)filter_var($args['id'], FILTER_SANITIZE_NUMBER_INT);
         $body = $request->getParsedBody();
         $body = call_user_func_array('array_merge', array_map(function ($key, $value) {
@@ -58,7 +58,7 @@ class UsersController {
         $this->patchUser($id, $body);
         return $response->withStatus(200);
     }
-    public function delete(Request $request, Response $response, $args) {
+    public function delete(Request $request, Response $response, $args): Response {
         $id = (int)filter_var($args['id'], FILTER_SANITIZE_NUMBER_INT);
         $this->deleteUser($id);
         return $response->withStatus(200);
@@ -72,14 +72,14 @@ class UsersController {
         return $response->withJson($routes);
     }
 
-    private function getUsers () {
+    private function getUsers (): array {
         $stmt = $this->db->prepare("SELECT name, birthdate FROM users LIMIT 1000");
         if ($stmt->execute()) {
             $result = $stmt->fetchAll();
         } else { var_dump($this->db->errorInfo()); }
         return $result;
     }
-    private function postUser (string $name, string $birthdate) {
+    private function postUser (string $name, string $birthdate): bool {
         $stmt = $this->db->prepare("INSERT INTO users (name, birthdate) VALUES (:name, :birthdate)");
         $stmt->bindParam(':name', $name, \PDO::PARAM_STR);
         $stmt->bindParam(':birthdate', $birthdate, \PDO::PARAM_STR);
@@ -91,9 +91,9 @@ class UsersController {
             return false;
         }
     }
-    private function putUser (int $id, string $name, string $birthdate) {
+    private function putUser (int $id, string $name, string $birthdate): bool {
         $stmt = $this->db->prepare("UPDATE users SET name = :name, birthdate = :birthdate WHERE id = :id");
-        $stmt->bindParam(':id', $id, \PDO::PARAM_STR);
+        $stmt->bindParam(':id', $id, \PDO::PARAM_INT);
         $stmt->bindParam(':name', $name, \PDO::PARAM_STR);
         $stmt->bindParam(':birthdate', $birthdate, \PDO::PARAM_STR);
         try {
@@ -103,7 +103,7 @@ class UsersController {
         }
         return true;
     }
-    private function patchUser (int $id, array $data) {
+    private function patchUser (int $id, array $data): bool {
         $set_string = implode(', ', array_map(function ($key) {
             return "{$key} = :{$key}";
         }, array_keys($data)));
@@ -112,7 +112,7 @@ class UsersController {
         foreach ($data as $key => $value) {
             $stmt->bindValue(":{$key}", $value, \PDO::PARAM_STR);
         }
-        $stmt->bindValue(':id', $id, \PDO::PARAM_STR);
+        $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
 
         try {
             $stmt->execute();
@@ -122,11 +122,16 @@ class UsersController {
             return false;
         }
     }
-    private function deleteUser () {
-        $stmt = $this->db->prepare("SELECT name, birthdate FROM users LIMIT 1000");
-        if ($stmt->execute()) {
-            $result = $stmt->fetchAll();
-        } else { var_dump($this->db->errorInfo()); }
-        return $result;
+    private function deleteUser (int $id): bool {
+        $stmt = $this->db->prepare("DELETE FROM users WHERE id = :id");
+        $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
+
+        try {
+            $stmt->execute();
+            return true;
+        } catch (PDOException $e) {
+            var_dump($this->db->errorInfo());
+            return false;
+        }
     }
 }

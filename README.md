@@ -17,5 +17,4 @@ Edit `db_config.php` for your db preferences
 [test.bewebmaster.co.il](http://test.bewebmaster.co.il) - _can be some changes in the live version_
 
 ### TODO
-1. Add DELETE routes
-2. Add interface for basic REST HTTP methods
+1. Add interface for basic REST HTTP methods
