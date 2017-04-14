@@ -6,7 +6,11 @@ $app->get('/users', 'UsersController:showUsers');
 
 $app->get('/api/users', 'UsersController:get');
 $app->post('/api/user', 'UsersController:post');
-$app->put('/api/user/{id:\d+}', 'UsersController:put');
-$app->patch('/api/user/{id:\d+}', 'UsersController:patch');
-$app->delete('/api/user/{id:\d+}', 'UsersController:delete');
+
+$app->group('/api/user/{id:\d+}', function () {
+	$this->put   ('', 'UsersController:put');
+	$this->patch ('', 'UsersController:patch');
+	$this->delete('', 'UsersController:delete');
+});
+
 $app->options('/', 'UsersController:options');

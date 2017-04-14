@@ -43,7 +43,7 @@ $container['UsersController'] = function ($container) {
 };
 
 require 'lib/routes.php';
-$container[ 'routes'] = function ($container) {
+$container['routes'] = function ($container) {
 	return array_map(function ($route) {
 		return ["method" => $route->getMethods()[0], "pattern" => $route->getPattern()];
 	}, $container->router->getRoutes(), []);
